@@ -14,7 +14,9 @@ from pathlib import Path
 import requests
 
 # 3rd party imports
-from html2image import Html2Image
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
 from pprint import pprint
 
@@ -62,60 +64,50 @@ for q in queries:
   q = q.split(',')
   query_type = q[0]
   query = q[1]
-
+  print(f'type: [{query_type}]\tquery: [{query}]')
   query_post = query.replace(' ', '%20') # replace space with %20 for query
 
   # google
   google_response = requests.get(f'http://google.com/complete/search?client=chrome&q={query_post}', headers = headers)
   google_response = json.loads(google_response.text)[1]
-  print('\tgoogle:')
   for result in google_response:
-    print('\t\t', result)
     df = add_to_data(df, query, query_type, 'Google', result, location_data['country'])
-  print('')
 
   # ddg
-  print('\tddg:')
   # https://github.com/theabbie/suggest <- found /ac/ path here
   ddg_response = requests.get(f'https://duckduckgo.com/ac/?kl=wt-wt&q={query_post}&format=json', headers = headers)
   ddg_response = json.loads(ddg_response.text)
   for result in ddg_response:
-    print('\t\t', result['phrase'])
     df = add_to_data(df, query, query_type, 'DuckDuckGo', result['phrase'], location_data['country'])
-  print('')
 
   # Yahoo
-  print('\tyahoo:')
-  # yahoo_url = f'https://search.yahoo.com/sugg/gossip/gossip-us-fastbreak/?pq=&command={q}&t_stmp=1696318693&callback=YAHOO.SA.apps%5B0%5D.cb.sacb17&l=1&bm=3&output=sd1&nresults=10&appid=syc&geoid=727232&ll=4.893189%2C52.373119&bck=28povfphqscki%26b%3D3%26s%3Dvf&csrcpvid=q0Ja0jEwLjIkZx9.Y64ykgUjMTQ2LgAAAAD20.Y8&vtestid=&mtestid=32369%3DNOUGEO03R%2628121%3DUNIOM02R%2628306%3DWTW000%2630405%3DGOGA01%2631718%3DWTDAI_PC_T%2631818%3DTNSRP01%2632671%3DVM25784C%2632722%3DPEOPLEPOPTEST%2633118%3DCCDD_S1%2633719%3D25810SLC%2633939%3DQRYC&spaceId=1197804867'
   yahoo_url = f'https://search.yahoo.com/sugg/gossip/gossip-us-fastbreak/?pq=&command={query_post}&output=json&callback=YAHOO.SA.apps%5B0%5D.cb.sacb17'
   yahoo_response = requests.get(yahoo_url)
   yahoo_response = json.loads(yahoo_response.text)['gossip']
   for result in yahoo_response['results']:
-    print('\t\t', result['key'])
     df = add_to_data(df, query, query_type, 'Yahoo', result['key'], location_data['country'])
 
-final_results = {
-  'Google': {
-    'male': 0,
-    'female': 0},
-  'DuckDuckGo': {
-    'male': 0,
-    'female': 0},
-  'Yahoo': {
-    'male': 0,
-    'female': 0},
-    }
 
-for index, row in df.iterrows():
-  if row['query_type'] == 'm':
-    final_results[row['engine']]['male'] += 1
-  else:
-    final_results[row['engine']]['female'] += 1
-
-pprint(final_results, sort_dicts=False)
-
-# export results to xlsx
-filename = str(location_data['country'])
-filename += '_' + str(datetime.now().strftime('%H-%M_%d-%m-%Y'))
+# export total query results to xlsx
+filename = str(datetime.now().strftime('%H-%M_%d-%m-%Y'))
 print(f'exporting data to {filename}...')
 df.to_excel(f'./../output_data/{filename}.xlsx')
+
+# transform dataframe to count types of queries per engine
+df = pd.DataFrame(df.groupby(['engine', 'query_type'])['query_type'].count().rename('count')).reset_index()
+
+# create & style plot
+sns.set(style = 'white')
+sns.barplot(data = df,
+            x = 'engine', y = 'count',
+            hue = 'query_type', palette = ['#FF69B4', '#87CEFA']
+            )
+
+plt.xlabel('Search engine')
+plt.xticks(rotation = 45)
+plt.ylabel('Autocomplete suggestions')
+plt.yticks(rotation = 45)
+plt.legend(loc = 'upper center', framealpha = 0.5)
+plt.title('Amount of autocomplete suggestions based\non gender-focussed queries per search engine')
+plt.savefig(f'./../output_data/{filename}.png', dpi = 160, format = 'png')
+print(f'exporting figure to {filename}.png...')
