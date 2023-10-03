@@ -18,36 +18,17 @@ import pandas as pd
 from pprint import pprint
 
 
-def add_to_data(df, query, engine, ac, country):
+
+def add_to_data(df, query, engine, ac, type):
   new_row = {
      'query': query,
      'engine': engine,
      'ac': ac,
-     'country': country,
+     'type': type,
      'timestamp': datetime.now().strftime('%d-%m-%Y %H:%M:%S')
   }
   df = df._append(new_row, ignore_index=True)
   return df
-
-# ### BING TESTS
-# url = 'https://api.bing.microsoft.com/v7.0/search/'
-# bing_response = requests.get(url)
-# print(type(bing_response))
-# print(bing_response.text)
-# exit()
-
-# # test feature: automated screenshots
-# # major popup with sign in block...
-# _hti = Html2Image(browser='chrome',
-#          output_path='screenshots_temp',
-#          size=(1280,720),
-#          temp_path='html2image_temp',
-#          keep_temp_files=False,
-#          custom_flags=['--virtual-time-budget=100'])
-
-# url = 'https://duckduckgo.com/?q=female+leaders&iar=images&iax=images&ia=images'
-# test = 'test'
-# _hti.screenshot(url=url, save_as=f'{test}.jpg')
 
 # initiate dataframe
 df = pd.DataFrame(columns = ['query', 'engine', 'ac', 'country', 'timestamp'])
@@ -58,8 +39,10 @@ location_response = requests.get('http://ipinfo.io/json')
 location_data = json.loads(location_response.text)
 print(f"searching from {location_data['country']}...\n")
 
+lang = 'english'
+
 # get urls from url_list_file
-queries_file = 'queries.txt'
+queries_file = f'queries_{lang}_small.txt'
 queries = []
 try:
   print(f'processing urls from {queries_file}...\n')
@@ -74,10 +57,20 @@ except Exception as e:
 # get autocompletes per query
 headers = {
     "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36 Edge/18.19582"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36 Edge/18.19582",
+    # "languageCode": 'IT', # google header for different languages
 }
 
 for q in queries:
+  q = q.split(',')
+  print(type(q))
+  print(q)
+  # print(q, q[0], q[1])
+  # q_type = q[0]
+  # q = q[1]
+  # print(q, q_type)
+  exit()
+
   print(f'[{q}] query produces auto complete suggestions:')
 
   q_post = q.replace(' ', '%20') # replace space with %20 for query
@@ -110,11 +103,29 @@ for q in queries:
   for result in yahoo_response['results']:
     print('\t\t', result['key'])
     df = add_to_data(df, q, 'Yahoo', result['key'], location_data['country'])
-    #query, engine, ac, country
 
+final_results = {
+  'Google': {
+    'male': 0,
+    'female': 0},
+  'DuckDuckGo': {
+    'male': 0,
+    'female': 0},
+  'Yahoo': {
+    'male': 0,
+    'female': 0},
+    }
+
+for index, row in df.iterrows():
+  if 'male' in row['query']:
+    final_results[row['engine']]['male'] += 1
+  else:
+    final_results[row['engine']]['female'] += 1
+
+pprint(final_results, sort_dicts=False)
 
 # export results to xlsx
 filename = str(location_data['country'])
 filename += '_' + str(datetime.now().strftime('%d-%m-%Y'))
-print(f'exporting data to {filename}...')
-df.to_excel(f'{filename}.xlsx')
+print(f'exporting data to {filename}_{lang}...')
+df.to_excel(f'{filename}_{lang}.xlsx')
