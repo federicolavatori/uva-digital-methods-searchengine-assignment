@@ -1,12 +1,3 @@
-# TO DO
-# implement bing --> requires azure account, which requires creditcard...
-# check browser differences / headings?
-# check language options (all ac are nog in english)
-# get screenshots from images tab --> html2image cookie issues
-
-# optionally:
-#   automatically get new vpn location
-
 # local imports
 from datetime import datetime
 import json
@@ -35,7 +26,6 @@ def add_to_data(df, query, query_type, engine, ac, location):
 df = pd.DataFrame(columns = ['query', 'query_type', 'engine', 'ac', 'country', 'timestamp'])
 
 # get current location
-# https://stackoverflow.com/questions/24678308/how-to-find-location-with-ip-address-in-python
 location_response = requests.get('http://ipinfo.io/json')
 location_data = json.loads(location_response.text)
 print(f"searching from {location_data['country']}...\n")
@@ -69,6 +59,8 @@ for q in queries:
 
   # google
   google_response = requests.get(f'http://google.com/complete/search?client=chrome&q={query_post}', headers = headers)
+  google_cookies = google_response.cookies
+  #### pprint(google_cookies) # check this!
   google_response = json.loads(google_response.text)[1]
   for result in google_response:
     df = add_to_data(df, query, query_type, 'Google', result, location_data['country'])
@@ -86,7 +78,6 @@ for q in queries:
   yahoo_response = json.loads(yahoo_response.text)['gossip']
   for result in yahoo_response['results']:
     df = add_to_data(df, query, query_type, 'Yahoo', result['key'], location_data['country'])
-
 
 # export total query results to xlsx
 filename = str(datetime.now().strftime('%H-%M_%d-%m-%Y'))
