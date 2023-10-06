@@ -1,0 +1,16 @@
+m,male CEOs are
+f,female CEOs are
+m,male leaders are
+f,female leaders are
+m,male managers are
+f,female managers are
+m,male COOs are
+f,female COOs are
+m,male CFOs are
+f,female CFOs are
+m,male directors are
+f,female directors are
+m,male principals are
+f,female principals are
+m,male presidents are
+f,female presidents are
