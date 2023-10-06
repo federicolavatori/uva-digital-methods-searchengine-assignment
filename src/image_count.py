@@ -25,7 +25,7 @@ sns.set_theme(style = 'whitegrid')
 g = sns.catplot(
     data = result_df, kind = 'bar', errorbar = None,
     x = 'search engine', y = 'count', hue = 'type',
-   	palette = ['#b9f2f0', '#fab0e4', '#8de5a1', '#d0bbff'], alpha = 0.6) 
+   	palette = ['#b9f2f0', '#fab0e4', '#8de5a1', '#d0bbff']) 
 
 g.legend.set_visible(False)
 plt.grid(visible = False)

@@ -17,7 +17,7 @@ expanded_stopwords = ['likely', 'many', 'ceos', 'managers', 'often']
 excluded_words = stopwords.words('english') + expanded_stopwords
 
 # read data from auto_complete_compare
-data = Path('./../output_data/data_15-07_05-10-2023.xlsx')
+data = Path('./../output_data/data_15-46_05-10-2023.xlsx')
 df = pd.read_excel(data)
 
 # tokenize autosuggestions from male focussed queries
